@@ -1,0 +1,58 @@
+import React from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchNotes, deleteNote } from '../../services/noteService';
+import type { FetchNotesResponse, Note } from '../../services/noteService';
+import styles from './NoteList.module.css';
+
+interface NoteListProps {
+  page: number;
+  perPage: number;
+  search?: string;
+}
+
+const NoteList: React.FC<NoteListProps> = ({ page, perPage, search }) => {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isError } = useQuery<FetchNotesResponse>({
+    queryKey: ['notes', { page, perPage, search }],
+    queryFn: () => fetchNotes({ page, perPage, search }),
+    staleTime: 5000, 
+  });
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteNote(id);
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (isLoading) return <div className={styles.loader}>Loading...</div>;
+  if (isError) return <div className={styles.error}>Something went wrong</div>;
+
+  // додатково перевіряємо, чи є нотатки
+  if (!data || !data.docs || data.docs.length === 0) return null;
+
+  return (
+    <ul className={styles.list}>
+      {data.docs.map((note: Note) => (
+        <li className={styles.listItem} key={note._id}>
+          <h2 className={styles.title}>{note.title}</h2>
+          <p className={styles.content}>{note.content}</p>
+          <div className={styles.footer}>
+            <span className={styles.tag}>{note.tag}</span>
+            <button
+              className={styles.button}
+              onClick={() => handleDelete(note._id)}
+            >
+              Delete
+            </button>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+export default NoteList;
