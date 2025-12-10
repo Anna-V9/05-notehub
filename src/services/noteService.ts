@@ -6,6 +6,7 @@ const BASE_URL = 'https://notehub-public.goit.study/api';
 
 
 const token = import.meta.env.VITE_NOTEHUB_TOKEN as string | undefined;
+console.log("TOKEN FROM ENV:", token);
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -22,16 +23,11 @@ export interface FetchNotesParams {
 }
 
 export interface FetchNotesResponse {
-  docs: Note[];
-  totalDocs: number;
-  limit: number;
+  notes: Note[];
   totalPages: number;
-  page: number;
-  pagingCounter?: number;
-  hasPrevPage?: boolean;
-  hasNextPage?: boolean;
-  prevPage?: number | null;
-  nextPage?: number | null;
+  page?: number;
+  totalDocs?: number;
+  limit?: number;
 }
 
 
@@ -41,6 +37,8 @@ export const fetchNotes = async (params: FetchNotesParams): Promise<FetchNotesRe
   const res = await api.get<FetchNotesResponse>('/notes', {
     params: { page, perPage, ...searchParam },
   });
+  console.log("FETCH NOTES RESPONSE:", res.data); 
+  
   return res.data;
 };
 
@@ -53,3 +51,4 @@ export const deleteNote = async (id: string) => {
   const res = await api.delete<{ deletedId?: string }>(`/notes/${id}`);
   return res.data;
 };
+

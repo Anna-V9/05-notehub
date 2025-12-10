@@ -31,28 +31,28 @@ const NoteList: React.FC<NoteListProps> = ({ page, perPage, search }) => {
   if (isLoading) return <div className={styles.loader}>Loading...</div>;
   if (isError) return <div className={styles.error}>Something went wrong</div>;
 
-  // додатково перевіряємо, чи є нотатки
-  if (!data || !data.docs || data.docs.length === 0) return null;
+  
+  if (!data?.notes || data.notes.length === 0) return null;
 
-  return (
-    <ul className={styles.list}>
-      {data.docs.map((note: Note) => (
-        <li className={styles.listItem} key={note._id}>
-          <h2 className={styles.title}>{note.title}</h2>
-          <p className={styles.content}>{note.content}</p>
-          <div className={styles.footer}>
-            <span className={styles.tag}>{note.tag}</span>
-            <button
-              className={styles.button}
-              onClick={() => handleDelete(note._id)}
-            >
-              Delete
-            </button>
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
+return (
+  <ul className={styles.list}>
+  {data.notes.map((note: Note, index) => (
+    <li
+      className={styles.listItem}
+      key={note._id ?? `${note.title}-${index}`} // Ось сюди вставили
+    >
+      <h2 className={styles.title}>{note.title}</h2>
+      <p className={styles.content}>{note.content}</p>
+      <div className={styles.footer}>
+        <span className={styles.tag}>{note.tag}</span>
+        <button className={styles.button} onClick={() => handleDelete(note._id)}>
+          Delete
+        </button>
+      </div>
+    </li>
+  ))}
+</ul>
+);
 };
 
 export default NoteList;
