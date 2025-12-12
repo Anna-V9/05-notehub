@@ -11,9 +11,21 @@ const modalRoot = document.getElementById('modal-root') || document.body;
 
 const Modal: React.FC<ModalProps> = ({ onClose, children }) => {
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+
+    
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = originalOverflow;
+    };
   }, [onClose]);
 
   return createPortal(

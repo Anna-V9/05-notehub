@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useDebounce } from 'use-debounce';
+import React, { useState } from 'react';
 import styles from './SearchBox.module.css';
 
 interface SearchBoxProps {
@@ -8,11 +7,6 @@ interface SearchBoxProps {
 
 const SearchBox: React.FC<SearchBoxProps> = ({ onSearch }) => {
   const [value, setValue] = useState('');
-  const [debounced] = useDebounce(value, 500); 
-
-  useEffect(() => {
-    onSearch(debounced);
-  }, [debounced, onSearch]);
 
   return (
     <input
@@ -20,7 +14,10 @@ const SearchBox: React.FC<SearchBoxProps> = ({ onSearch }) => {
       type="text"
       placeholder="Search notes"
       value={value}
-      onChange={(e) => setValue(e.target.value)}
+      onChange={(e) => {
+        setValue(e.target.value);
+        onSearch(e.target.value);
+      }}
     />
   );
 };

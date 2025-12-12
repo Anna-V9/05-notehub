@@ -3,7 +3,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import type { FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { createNote } from '../../services/noteService';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import styles from './NoteForm.module.css';
 
 interface NoteFormValues {
@@ -27,22 +27,31 @@ const validationSchema = Yup.object({
 const NoteForm: React.FC<NoteFormProps> = ({ onSuccess }) => {
   const queryClient = useQueryClient();
 
-  const initialValues: NoteFormValues = { title: '', content: '', tag: 'Todo' };
+  
+  const mutation = useMutation({
+  mutationFn: (values: NoteFormValues) => createNote(values),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['notes'], exact: false });
+    onSuccess?.();
+  },
+});
 
-  const handleSubmit = async (
+  const initialValues: NoteFormValues = {
+    title: '',
+    content: '',
+    tag: 'Todo',
+  };
+
+  const handleSubmit = (
     values: NoteFormValues,
-    { setSubmitting, resetForm }: FormikHelpers<NoteFormValues>
+    formikHelpers: FormikHelpers<NoteFormValues>
   ) => {
-    try {
-      await createNote(values);
-      await queryClient.invalidateQueries({ queryKey: ['notes'] });
-      resetForm();
-      onSuccess?.();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSubmitting(false);
-    }
+    mutation.mutate(values, {
+      onSettled: () => {
+        formikHelpers.setSubmitting(false);
+        formikHelpers.resetForm(); 
+      },
+    });
   };
 
   return (
@@ -61,7 +70,13 @@ const NoteForm: React.FC<NoteFormProps> = ({ onSuccess }) => {
 
           <div className={styles.formGroup}>
             <label htmlFor="content">Content</label>
-            <Field id="content" name="content" as="textarea" rows={8} className={styles.textarea} />
+            <Field
+              id="content"
+              name="content"
+              as="textarea"
+              rows={8}
+              className={styles.textarea}
+            />
             <ErrorMessage name="content" component="span" className={styles.error} />
           </div>
 
@@ -78,10 +93,18 @@ const NoteForm: React.FC<NoteFormProps> = ({ onSuccess }) => {
           </div>
 
           <div className={styles.actions}>
-            <button type="button" className={styles.cancelButton} onClick={onSuccess}>
+            <button
+              type="button"
+              className={styles.cancelButton}
+              onClick={onSuccess}
+            >
               Cancel
             </button>
-            <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
+            <button
+              type="submit"
+              className={styles.submitButton}
+              disabled={isSubmitting || mutation.isPending}
+            >
               Create note
             </button>
           </div>
