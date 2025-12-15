@@ -6,13 +6,3 @@ export interface Note {
   createdAt: string;
   updatedAt: string;
 }
-
-export interface NotesResponse {
-  docs: Note[];
-  totalDocs?: number;
-  limit?: number;
-  page?: number;
-  totalPages?: number;
-  hasNextPage?: boolean;
-  hasPrevPage?: boolean;
-}

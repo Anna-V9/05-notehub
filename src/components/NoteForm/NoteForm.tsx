@@ -2,8 +2,8 @@ import React from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import type { FormikHelpers } from 'formik';
 import * as Yup from 'yup';
-import { createNote } from '../../services/noteService';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createNote } from '../../services/noteService';
 import styles from './NoteForm.module.css';
 
 interface NoteFormValues {
@@ -13,28 +13,31 @@ interface NoteFormValues {
 }
 
 interface NoteFormProps {
-  onSuccess?: () => void;
+  onSuccess?: () => void; 
+  onCancel?: () => void;  
 }
 
 const validationSchema = Yup.object({
-  title: Yup.string().min(3).max(50).required('Required'),
-  content: Yup.string().max(500),
+  title: Yup.string()
+    .min(3, 'Minimum 3 characters')
+    .max(50, 'Maximum 50 characters')
+    .required('Required'),
+  content: Yup.string().max(500, 'Maximum 500 characters'),
   tag: Yup.mixed<'Todo' | 'Work' | 'Personal' | 'Meeting' | 'Shopping'>()
     .oneOf(['Todo', 'Work', 'Personal', 'Meeting', 'Shopping'])
     .required('Required'),
 });
 
-const NoteForm: React.FC<NoteFormProps> = ({ onSuccess }) => {
+const NoteForm: React.FC<NoteFormProps> = ({ onSuccess, onCancel }) => {
   const queryClient = useQueryClient();
 
-  
   const mutation = useMutation({
-  mutationFn: (values: NoteFormValues) => createNote(values),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['notes'], exact: false });
-    onSuccess?.();
-  },
-});
+    mutationFn: (values: NoteFormValues) => createNote(values),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+      onSuccess?.();
+    },
+  });
 
   const initialValues: NoteFormValues = {
     title: '',
@@ -44,18 +47,18 @@ const NoteForm: React.FC<NoteFormProps> = ({ onSuccess }) => {
 
   const handleSubmit = (
     values: NoteFormValues,
-    formikHelpers: FormikHelpers<NoteFormValues>
+    { setSubmitting, resetForm }: FormikHelpers<NoteFormValues>
   ) => {
     mutation.mutate(values, {
       onSettled: () => {
-        formikHelpers.setSubmitting(false);
-        formikHelpers.resetForm(); 
+        setSubmitting(false);
+        resetForm();
       },
     });
   };
 
   return (
-    <Formik<NoteFormValues>
+    <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={handleSubmit}
@@ -65,7 +68,11 @@ const NoteForm: React.FC<NoteFormProps> = ({ onSuccess }) => {
           <div className={styles.formGroup}>
             <label htmlFor="title">Title</label>
             <Field id="title" name="title" className={styles.input} />
-            <ErrorMessage name="title" component="span" className={styles.error} />
+            <ErrorMessage
+              name="title"
+              component="span"
+              className={styles.error}
+            />
           </div>
 
           <div className={styles.formGroup}>
@@ -77,7 +84,11 @@ const NoteForm: React.FC<NoteFormProps> = ({ onSuccess }) => {
               rows={8}
               className={styles.textarea}
             />
-            <ErrorMessage name="content" component="span" className={styles.error} />
+            <ErrorMessage
+              name="content"
+              component="span"
+              className={styles.error}
+            />
           </div>
 
           <div className={styles.formGroup}>
@@ -89,17 +100,22 @@ const NoteForm: React.FC<NoteFormProps> = ({ onSuccess }) => {
               <option value="Meeting">Meeting</option>
               <option value="Shopping">Shopping</option>
             </Field>
-            <ErrorMessage name="tag" component="span" className={styles.error} />
+            <ErrorMessage
+              name="tag"
+              component="span"
+              className={styles.error}
+            />
           </div>
 
           <div className={styles.actions}>
             <button
               type="button"
               className={styles.cancelButton}
-              onClick={onSuccess}
+              onClick={onCancel}
             >
               Cancel
             </button>
+
             <button
               type="submit"
               className={styles.submitButton}

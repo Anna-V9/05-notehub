@@ -1,13 +1,9 @@
 import axios from 'axios';
 import type { Note } from '../types/note';
-export type { Note };
-import type { NotesResponse } from '../types/note';
 
 const BASE_URL = 'https://notehub-public.goit.study/api';
 
-
 const token = import.meta.env.VITE_NOTEHUB_TOKEN as string | undefined;
-console.log("TOKEN FROM ENV:", token);
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -23,22 +19,32 @@ export interface FetchNotesParams {
   search?: string;
 }
 
-export interface FetchNotesResponse {
-  notes: Note[];
-  totalPages: number;
-  page?: number;
+// ✅ Тепер експортуємо
+export interface NotesResponse {
+  docs: Note[];
   totalDocs?: number;
   limit?: number;
+  page?: number;
+  totalPages?: number;
+  hasNextPage?: boolean;
+  hasPrevPage?: boolean;
 }
 
-
-export const fetchNotes = async (params: FetchNotesParams): Promise<NotesResponse> => {
+export const fetchNotes = async (
+  params: FetchNotesParams
+): Promise<NotesResponse> => {
   const { page = 1, perPage = 12, search } = params;
-  const searchParam = search ? { search } : {};
-  const res = await api.get<FetchNotesResponse>('/notes', {
-    params: { page, perPage, ...searchParam },
-  }); 
-  
+
+  const res = await api.get<{
+    notes: Note[];
+    totalDocs?: number;
+    limit?: number;
+    page?: number;
+    totalPages?: number;
+  }>('/notes', {
+    params: { page, perPage, ...(search ? { search } : {}) },
+  });
+
   return {
     docs: res.data.notes,
     totalDocs: res.data.totalDocs,
@@ -48,13 +54,13 @@ export const fetchNotes = async (params: FetchNotesParams): Promise<NotesRespons
   };
 };
 
-export const createNote = async (payload: { title: string; content?: string; tag: string }) => {
+export const createNote = async (
+  payload: { title: string; content?: string; tag: string }
+): Promise<Note> => {
   const res = await api.post<Note>('/notes', payload);
   return res.data;
 };
 
-export const deleteNote = async (id: string): Promise<Note> => {
-  const res = await api.delete<Note>(`/notes/${id}`);
-  return res.data;
+export const deleteNote = async (id: string): Promise<void> => {
+  await api.delete(`/notes/${id}`);
 };
-

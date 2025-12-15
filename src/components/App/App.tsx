@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import debounce from 'lodash.debounce';
+
 import SearchBox from '../SearchBox/SearchBox';
 import NoteList from '../NoteList/NoteList';
 import Modal from '../Modal/Modal';
 import NoteForm from '../NoteForm/NoteForm';
 import Pagination from '../Pagination/Pagination';
-import { fetchNotes, deleteNote } from '../../services/noteService';
-import type { NotesResponse } from '../../types/note';
+
+import { fetchNotes } from '../../services/noteService';
+import type { NotesResponse } from '../../services/noteService';
+
 import styles from './App.module.css';
 
 const AppContent: React.FC = () => {
@@ -20,8 +18,6 @@ const AppContent: React.FC = () => {
   const [perPage] = useState(12);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isModalOpen, setModalOpen] = useState(false);
-
-  const queryClientInstance = useQueryClient();
 
   const debouncedSetSearch = useMemo(
     () =>
@@ -33,7 +29,9 @@ const AppContent: React.FC = () => {
   );
 
   useEffect(() => {
-    return () => debouncedSetSearch.cancel();
+    return () => {
+      debouncedSetSearch.cancel();
+    };
   }, [debouncedSetSearch]);
 
   const queryOptions: UseQueryOptions<NotesResponse, Error> = {
@@ -47,18 +45,21 @@ const AppContent: React.FC = () => {
   const notes = data?.docs ?? [];
   const totalPages = data?.totalPages ?? 1;
 
-  const mutationDelete = useMutation<void, Error, string>({
-    mutationFn: (id: string) => deleteNote(id).then(() => undefined),
-    onSuccess: () =>
-      queryClientInstance.invalidateQueries({ queryKey: ['notes'] }),
-  });
-
   return (
     <div className={styles.app}>
       <header className={styles.toolbar}>
-        <SearchBox onSearch={(value) => debouncedSetSearch(value)} />
-        <Pagination page={page} onPageChange={setPage} totalPages={totalPages} />
-        <button className={styles.button} onClick={() => setModalOpen(true)}>
+        <SearchBox onSearch={debouncedSetSearch} />
+
+        <Pagination
+          page={page}
+          onPageChange={setPage}
+          totalPages={totalPages}
+        />
+
+        <button
+          className={styles.button}
+          onClick={() => setModalOpen(true)}
+        >
           Create note +
         </button>
       </header>
@@ -67,14 +68,15 @@ const AppContent: React.FC = () => {
         {isLoading && <p>Loading...</p>}
         {isError && <p>Error loading notes</p>}
 
-        {!isLoading && !isError && (
-          <NoteList notes={notes} onDelete={(id) => mutationDelete.mutate(id)} />
-        )}
+        {!isLoading && !isError && <NoteList notes={notes} />}
       </main>
 
       {isModalOpen && (
         <Modal onClose={() => setModalOpen(false)}>
-          <NoteForm onSuccess={() => setModalOpen(false)} />
+          <NoteForm
+            onSuccess={() => setModalOpen(false)}
+            onCancel={() => setModalOpen(false)}
+          />
         </Modal>
       )}
     </div>
